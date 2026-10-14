@@ -1,0 +1,100 @@
+---
+title: "Data Sprint Selena Centeno"
+format: html
+editor: visual
+---
+
+## Question: Do the Numbats in Australia prefer summer or winter months?
+
+## \*Note: there are some assumptions I had to make based on the data that's given!
+
+```{r}
+#because why not:
+print("hello numbats in Australia!")
+```
+
+```{r}
+#Loading my packages and data:
+library(tidyverse)
+numbats_data<-read.csv("data/numbats.csv")
+summary(numbats_data)
+
+head(numbats_data)
+```
+
+```{r}
+#Filtering out the temp obs with NAs there
+numbats_temp_filtered<- numbats_data %>%
+  filter(!is.na(tmax), !is.na(tmin))
+#NOTE: when the data is filtered, there are 56 entries (the ones that aren't NA)
+
+#Counting the obs w/ the given temp data
+nrow(numbats_temp_filtered)
+
+#Calculateing some stats to help answer my question:
+numbats_temp_summary<- numbats_temp_filtered %>%
+  summarise(
+  avg_max = mean(tmax),
+  avg_min = mean(tmin),
+  max_temp = max(tmax),
+  min_temp = min(tmin))
+head(numbats_temp_summary)
+
+#Making a histogram of max % min temps
+ggplot(numbats_temp_filtered, aes(x = tmax)) +
+  geom_histogram(binwidth = 5,fill = "red", color = "black") +
+  labs(title = "Maximum Temperatures Associated with Numbat Observations",
+    x = "Maximum Temperature (degreeC)",
+    y = "Number of Observations") +
+  theme_minimal()
+
+ggplot(numbats_temp_filtered, aes(x = tmin)) +
+  geom_histogram(binwidth = 5,fill = "blue",color = "black") +
+  labs(title = "Minimum Temperatures Associated with Numbat Observations",
+    x = "Minimum Temperature (degreeC)",
+    y = "Number of Observations") +
+  theme_minimal()
+
+#I want to divide the numbat obs into categories of temperatures, so then I can do 3 month intervals (seasons of warmer and colder months)
+
+#Colder: below 20 degree C (68 degree F)
+colder_temps<- numbats_temp_filtered %>%
+  filter(tmax < 30)
+#Warmer: 30 degree C and above (86 dgeree % or higher)
+warmer_temps<- numbats_temp_filtered %>%
+  filter(tmax >= 30)
+#NOTE: 44 obs are in the "colder" category, and 12 obs are in the warmer category. 
+#I can see the count in the data frames but for "just because" sake...
+nrow(colder_temps)
+nrow(warmer_temps)
+
+#Could I make a table comparing the temp categories I made?
+temp_counts_compare<- data.frame(
+  temperature = c("Colder Temperatures", "Warmer Temperatures"),
+  observations = c(nrow(colder_temps), nrow(warmer_temps)))
+#^Well that was anticlimatic and I don't know what cool table I was expecting... so let's see if a bar graph looks cooler!
+
+ggplot(temp_counts_compare, aes(x = temperature, y = observations)) +
+  geom_col(fill = "purple", color = "black") +
+  labs(title = "Numbat Observations by Temperature Category",
+    x = "Temperature Category",
+    y = "Number of Observations") +
+  theme_minimal()
+
+#Let me calculate the verage temperatures by month with the 56 obs that I have...
+monthly_temps <- numbats_temp_filtered %>%
+  group_by(month) %>%
+  summarise(
+    observations = n(),
+    avg_tmax = mean(tmax),
+    avg_tmin = mean(tmin))
+
+#Graphing average maximum temperature by months
+ggplot(monthly_temps, aes(x = month, y = avg_tmax)) + geom_col(fill = "yellow", color = "black") +
+  labs(title = "Average Maximum Temperature by Observation Month",
+    x = "Month",
+    y = "Average Maximum Temperature (degreeC)") +
+  theme_minimal()
+
+#NOTE: the months are automatically put in alphabetical order, I think "groupby()" does that?
+```
